@@ -1,0 +1,30 @@
+# Extracted archive - original ZIP is tracked
+ArchitectureBrowser/
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# Dependencies
+node_modules/
