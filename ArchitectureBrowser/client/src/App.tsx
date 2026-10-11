@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Wiki from "@/pages/wiki";
+import Space from "@/pages/space";
 import Stepwise from "@/pages/stepwise";
 import NewSystem from "@/pages/new-system";
 import SavedSystems from "@/pages/saved-systems";
@@ -36,6 +37,9 @@ function Router() {
       </Route>
       <Route path="/wiki">
         {user ? <Wiki /> : <Redirect to="/" />}
+      </Route>
+      <Route path="/wiki/space">
+        {user ? <Space /> : <Redirect to="/" />}
       </Route>
       <Route path="/stepwise">
         {user ? <Stepwise /> : <Redirect to="/" />}

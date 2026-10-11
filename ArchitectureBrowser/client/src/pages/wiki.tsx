@@ -50,6 +50,18 @@ export default function Wiki() {
               </p>
             </div>
             
+            <div className="mb-8 rounded-lg border border-blue-100 bg-blue-50 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-gray-900">Element 1: Space modeler</h3>
+                <p className="text-sm text-gray-600">
+                  Define a system's space by choosing from 27 views and nine properties. The geometry follows your choices, and the result carries into Boundary.
+                </p>
+              </div>
+              <Link href="/wiki/space">
+                <Button data-testid="button-open-space-modeler">Open the Space modeler</Button>
+              </Link>
+            </div>
+
             <div className="architecture-explorer-container">
               <ArchitectureExplorer />
             </div>

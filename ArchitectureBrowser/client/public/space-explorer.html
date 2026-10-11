@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Space Explorer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: views | properties and rules | sticky drawing. On a phone the drawing sticks to the top so every tap shows its effect. Single light theme by brand rule. */
+:root{
+  --forest:#1f4d36; --moss:#6f8f74; --sage:#aebfa6; --cream:#f6f4ee; --navy:#16242e; --gold:#b5651d;
+  --paper:#fffdf8; --line:#d9d6ca; --mute:#55625c; --sagewash:#e6ebe0;
+  --display:Georgia,"Times New Roman",serif; --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light only;
+}
+*{box-sizing:border-box}
+body{background:var(--cream);color:var(--navy);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:24px 56px}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,4vw,38px);margin:0;color:var(--forest)}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--moss);font-weight:600}
+header p{max-width:68ch;margin:6px 0 0;color:var(--mute)}
+.grid{display:grid;grid-template-columns:310px minmax(0,1fr) 420px;grid-template-areas:"rail mid stage";gap:20px;align-items:start}
+.rail{grid-area:rail}.mid{grid-area:mid}.stage{grid-area:stage}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5}
+@media(max-width:1080px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"stage" "rail" "mid"}
+  .stage{top:env(safe-area-inset-top,0px);margin-inline:-16px;padding-inline:16px;background:var(--cream);padding-block:8px;border-bottom:1px solid var(--line)}
+  .stage .panel{padding:10px;gap:6px}.stage h2{font-size:16px}.stage .chips{display:none}}
+h2{font-family:var(--display);font-weight:400;font-size:21px;margin:0;color:var(--navy);text-wrap:balance}
+h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--moss);margin:0;font-weight:600}
+.rail{display:flex;flex-direction:column;gap:16px;min-width:0}
+.fam{display:flex;flex-direction:column;gap:6px}
+.view{background:var(--paper);border:1px solid var(--line);border-radius:4px;scroll-margin-top:340px}
+.view.on{border-color:var(--forest);box-shadow:inset 4px 0 0 var(--forest)}
+.vrow{display:flex;align-items:stretch}
+.opt{flex:1;min-width:0;text-align:left;background:none;border:0;padding:9px 8px 9px 12px;font:inherit;color:inherit;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.box{flex:none;width:18px;height:18px;border:1.5px solid var(--moss);border-radius:3px;margin-top:2px;display:grid;place-items:center;font-size:13px;line-height:1;color:var(--cream)}
+.view.on .box{background:var(--forest);border-color:var(--forest)}
+.opt b{display:block;font-weight:600;font-size:14px}
+.opt span.sub{display:block;font-size:12px;color:var(--mute)}
+.more{flex:none;background:none;border:0;border-left:1px solid var(--line);font:inherit;font-size:12px;color:var(--forest);padding:0 10px;cursor:pointer;text-decoration:underline}
+.detail{padding:10px 12px 12px;border-top:1px solid var(--line);font-size:13px;display:flex;flex-direction:column;gap:6px}
+.detail p{margin:0}.detail ol{margin:0;padding-left:18px}
+.detail a{color:var(--forest)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.mid{display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.src{font-size:13px;color:var(--mute);margin:0}
+ol.rules,ul.rules{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;max-width:68ch}
+.props{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.prop{display:flex;flex-direction:column;gap:5px}
+.prop .k{font-size:14px;font-weight:600}
+.prop .plain{font-size:13px;color:var(--mute);margin:0}
+.prop.conflict{border-left:3px solid var(--gold);padding-left:10px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{font:inherit;font-size:13px;padding:5px 11px;border:1px solid var(--line);background:var(--cream);color:var(--navy);border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:var(--cream);border-color:var(--navy)}
+.seg button.want{border-color:var(--gold)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+.why{font-size:12px;color:var(--mute);margin:0}
+.why.open{color:var(--gold)}
+.note{font-size:13px;color:var(--mute);margin:0;max-width:70ch}
+.gtabs{display:flex;flex-wrap:wrap;gap:6px}
+.gtabs button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--line);background:var(--cream);color:var(--navy);border-radius:4px;cursor:pointer}
+.gtabs button[aria-pressed="true"]{background:var(--forest);color:var(--cream);border-color:var(--forest)}
+.canvas{position:relative;border:1px solid var(--line);border-radius:4px;background:var(--sagewash);overflow:hidden}
+.canvas svg{display:block;width:100%;height:auto;transition:transform .35s ease}
+.canvas.tilt svg{transform:perspective(700px) rotateX(46deg) scale(.9);transform-origin:50% 70%}
+.badge{position:absolute;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--navy);color:var(--cream)}
+.badge.tl{top:6px;left:6px}.badge.bl{top:6px;right:6px}
+.flash{animation:flash .7s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--gold)}100%{box-shadow:0 0 0 0 transparent}}
+.last{font-size:13px;margin:0;padding:6px 10px;border-left:3px solid var(--moss);background:var(--sagewash)}
+dl{margin:0;display:flex;flex-direction:column;gap:10px}
+dt{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--moss);font-weight:600}
+dd{margin:0}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--moss);color:var(--forest)}
+.tag.open{border-color:var(--gold);color:var(--gold)}
+.fit{font-size:13px;margin:0;padding:8px 12px;border-left:3px solid var(--moss);background:var(--sagewash)}
+.fit.bad{border-left-color:var(--gold)}
+.state{font-family:var(--display);font-size:16px;margin:0;max-width:72ch}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:inherit;font-weight:600;padding:8px 16px;border-radius:4px;border:1px solid var(--forest);background:var(--forest);color:var(--cream);cursor:pointer}
+.btn.ghost{background:var(--paper);color:var(--forest)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.status{font-size:13px;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--sagewash);color:var(--forest)}
+table.carry{border-collapse:collapse;width:100%}
+table.carry th,table.carry td{text-align:left;vertical-align:top;padding:9px 10px;border-top:1px solid var(--line);font-size:14px}
+table.carry th{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--moss);font-weight:600;border-top:0}
+.scroll{overflow-x:auto}
+footer{font-size:13px;color:var(--mute);max-width:78ch;display:flex;flex-direction:column;gap:6px}
+footer p{margin:0}
+@keyframes drift{0%{transform:translate(0,0)}50%{transform:translate(7px,-5px)}100%{transform:translate(0,0)}}
+svg.chg .env{animation:drift 2.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){svg.chg .env{animation:none}.canvas svg{transition:none}.flash{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">System Architecture Wiki · Element 1 of 10</div>
+    <h1>Space</h1>
+    <p>Model the space a system sits in by choosing options. Select one or more views, settle the properties where they disagree, and watch the drawing change with every choice. Save the result and it carries into Element 2, Boundary.</p>
+  </header>
+
+  <div class="grid">
+    <aside class="stage" aria-live="polite">
+      <div class="panel">
+        <h3>The drawing follows your choices</h3>
+        <h2 id="gname"></h2>
+        <div class="canvas" id="canvas"></div>
+        <p class="last" id="last"></p>
+        <div class="chips" id="chips" aria-label="Choices shown in this drawing"></div>
+      </div>
+    </aside>
+
+    <nav class="rail" id="rail" aria-label="Views of space"></nav>
+
+    <div class="mid">
+      <section class="panel">
+        <h3>Views selected</h3>
+        <h2 id="fname"></h2>
+        <p class="fit" id="coexist"></p>
+        <h3>Properties</h3>
+        <div class="props" id="props"></div>
+        <div class="row"><button class="btn ghost" type="button" id="reset">Use the views' values</button></div>
+        <h3>Space, as defined by these choices</h3>
+        <p class="state" id="state"></p>
+        <div class="row">
+          <button class="btn" type="button" id="save">Save Space</button>
+          <button class="btn ghost" type="button" id="revert">Revert to saved</button>
+          <span class="status" id="status" role="status"></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Rules in force</h3>
+        <div id="vrules" style="display:flex;flex-direction:column;gap:12px"></div>
+        <h3>From the properties</h3>
+        <ul class="rules" id="prules"></ul>
+      </section>
+
+      <section class="panel">
+        <h3>About this geometry</h3>
+        <p class="fit" id="fit"></p>
+        <dl>
+          <div><dt>Keeps</dt><dd id="gkeep"></dd></div>
+          <div><dt>Ignores</dt><dd id="gdrop"></dd></div>
+          <div><dt>Read the picture</dt><dd id="gread"></dd></div>
+          <div><dt>Source</dt><dd id="gsrc"></dd></div>
+        </dl>
+        <h3>Compare another geometry</h3>
+        <div class="gtabs" id="gtabs" role="group" aria-label="Geometry"></div>
+        <p class="note">Organizing rule for the classical geometries (Klein, 1872): a geometry is defined by what stays the same when the space is transformed. Curved-surface, graph and fractal geometry fall outside that rule.</p>
+      </section>
+
+      <section class="panel">
+        <h3>Carried into Element 2</h3>
+        <h2>What the saved Space fixes about the Boundary</h2>
+        <p class="note" id="carrynote"></p>
+        <div class="scroll"><table class="carry" id="carry"></table></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>What is and is not verified.</b> Two separate checks against web sources covered every view and every geometry. They confirmed each citation's author, title and year, and corrected or re-sourced the rules that did not hold. Most confirmations rest on secondary sources; the primary text was opened for Meadows, Lewin (1936), Shannon (1949), Sorokin and Gauss only. Still unconfirmed: that Bourdieu's second axis and the link between position and taste appear in Distinction itself (confirmed for his 1985 article), and Hutchinson's and von Bertalanffy's rules in their own words. "Look it up" opens a Wikipedia search as a starting point. Each view's starting property values, the rule that picks the geometry, and the Space-to-Boundary links are readings made for this page. Twenty-seven views is broad, not exhaustive.</p>
+    <p>Saved choices are kept in this browser only until the tool is built into the wiki.</p>
+  </footer>
+</div>
+
+<script>
+
+const GROUPS=[['sys','Systems thinking'],['sci','Mathematics and natural science'],['econ','Economics'],['soc','Sociology and psychology']];
+// p = pos, dims, dist, extent, shape, scale, grain, observer, change
+const V=(id,grp,plain,name,src,w,def,rules,p)=>({id,grp,plain,name,src,w,def,rules,p:p.split(' ')});
+const FIELDS=[
+V('gst','sys','Everything outside that the system trades with','General systems theory','von Bertalanffy, General System Theory (1968)','Systems theory',
+ 'Space is the environment: everything outside the system that it exchanges matter, energy or information with.',
+ ['Living systems are open: they cannot be understood apart from their environment.','An open system exchanges with its environment; a closed one is treated as isolated from it.','An open system holds a steady state by continuous throughput, not by standing still.'],'regions n no unbounded flat one continuous same changing'),
+V('ackoff','sys','Only the outside things that can change the system','System-of-systems concepts','Ackoff, "Towards a System of Systems Concepts" (1971)','Russell L. Ackoff',
+ 'Space is the set of outside elements, and their relevant properties, whose change can change the state of the system.',
+ ['An outside element counts only if a change in it can change the system.','Different observers may draw different systems and environments from the same situation.','System plus environment together hold everything of interest.'],'regions n no bounded flat one discrete set changing'),
+V('miller','sys','A physical place, inside a larger system','Living systems theory','Miller, Living Systems (1978)','Living systems',
+ 'Space is physical space-time. Every system sits inside a larger suprasystem.',
+ ['The suprasystem is the next higher system in which the system is a component.','There are two sorts of space: physical or geographical space, and conceptual or abstracted spaces.'],'distance 3 yes unbounded flat one continuous same changing'),
+V('se','sys','The things the system must connect to','Systems engineering','ISO/IEC/IEEE 15288; context diagram practice','System context diagram',
+ 'Space is the operating context: the external entities the system of interest must interact with.',
+ ['Name one system of interest; everything else is context.','Every external entity that interacts with it appears on the context diagram.','Every interaction crosses a named interface.','Enabling systems (those that build or support it) are listed separately.'],'links n no bounded flat one discrete same static'),
+V('vsm','sys','A separate outside for every unit, at every level','Viable System Model','Beer, Brain of the Firm (1972); Heart of Enterprise (1979)','Viable system model',
+ 'Space is a set of environments: one local environment for each operating unit, plus a wider and future environment scanned on behalf of the whole.',
+ ['Each operating unit has its own environment.','The environment always has more variety than the operation, and the operation more than its management.','Variety must be reduced coming in and amplified going out until the three balance.','The same arrangement repeats at every level of the organization.'],'regions n no unbounded flat repeats discrete set changing'),
+V('emery','sys','How calm or turbulent the surroundings are','Causal texture of environments','Emery & Trist (1965)','Fred Emery',
+ 'Space is classified by how the parts of the environment are connected to each other, apart from the system.',
+ ['Placid, randomized: goods and harms are scattered at random.','Placid, clustered: they come in clusters, so location matters.','Disturbed-reactive: similar competitors react to each other.','Turbulent: the ground itself is moving.'],'links n no unbounded flat one discrete same changing'),
+V('sd','sys','Whatever the model leaves outside','System dynamics','Forrester (1961, 1968); Meadows, Thinking in Systems (2008)','System dynamics',
+ 'Space is whatever the model boundary leaves outside, shown as sources and sinks ("clouds").',
+ ['Draw the boundary wide enough that the causes of the behavior are inside it.','Clouds mark where flows come from and go to outside the boundary; what lies behind them is left out of the model.','The state of the space inside is the level of its stocks.','Boundaries are chosen for a purpose and redrawn for each new question.'],'regions n no bounded flat one continuous set changing'),
+V('ashby','sys','Every state the system could be in','Cybernetics','Ashby, An Introduction to Cybernetics (1956)','Variety (cybernetics)',
+ 'Space is the state space: the set of every state the chosen variables could take.',
+ ['The observer chooses the variables; they are not given by nature.','One state is one point; behavior is a trajectory through the points.','A constraint is any reduction in the states that can occur.','Only variety in the regulator can absorb variety in the disturbances.'],'axes n no bounded flat one discrete set static'),
+V('ssm','sys','The givens, as one worldview sees them','Soft systems methodology','Checkland, Systems Thinking, Systems Practice (1981)','Soft systems methodology',
+ 'Space is the "E" in CATWOE: the constraints the system takes as given, seen from a stated worldview.',
+ ['The environment is whatever the system takes as given.','It is always described from a named worldview.','A different worldview gives a different environment for the same situation.'],'regions n no bounded flat one discrete viewpoint changing'),
+V('csh','sys','Who and what is judged to count','Critical systems heuristics','Ulrich, Critical Heuristics of Social Planning (1983)','Boundary critique',
+ 'Space is set by boundary judgments: decisions about whose interests and which facts count.',
+ ['Twelve boundary questions fix what is in and out.','Ask each question twice: what is the case, and what ought to be.','Those affected but not involved must be considered.','No boundary is neutral; each must be justified.'],'regions n no bounded flat one discrete set changing'),
+V('second','sys','Whatever the observer marks off','Second-order cybernetics and autopoiesis','Spencer-Brown (1969); Maturana & Varela (1980); von Foerster','Autopoiesis',
+ 'Space appears only when an observer draws a distinction. A living system produces its own boundary.',
+ ['No distinction, no space.','The observer is part of what is described.','The system is closed in its operations; the environment can trigger change but cannot dictate it.','System and medium change together over time (structural coupling).'],'regions n no bounded flat one discrete set changing'),
+V('cynefin','sys','How knowable cause and effect are','Cynefin','Snowden & Boone (2007)','Cynefin framework',
+ 'Space is one of several domains, told apart by how cause and effect relate. A fifth state, disorder, means not knowing which domain applies.',
+ ['Simple (later renamed Clear): cause and effect are obvious. Sense, categorize, respond.','Complicated: they can be worked out. Sense, analyze, respond.','Complex: visible only in hindsight. Probe, sense, respond.','Chaotic: no usable relation. Act, sense, respond.'],'regions 2 no bounded flat one discrete set changing'),
+V('dyn','sci','Every state, with the paths between them','Dynamical systems theory','Poincaré (1890s); Ruelle & Takens (1971)','Phase space',
+ 'Space is phase space: each point is one complete state, and the laws of motion carry it along a path.',
+ ['One axis for every variable needed to fix the state.','When the laws of motion are fixed and deterministic, paths never cross: the present state fixes the next.','In systems that lose energy, long-run behavior settles onto attractors: a point, a cycle, a torus, or a strange attractor.','Each attractor has a basin of starting points that lead to it.'],'axes 2 yes unbounded flat one continuous same static'),
+V('kauffman','sci','A landscape of better and worse options','Complexity science','Wright (1932); Kauffman, The Origins of Order (1993)','Fitness landscape',
+ 'Space is a fitness landscape: every possible configuration, with a height showing how well each one performs.',
+ ['Neighbors differ by one change.','Systems climb to nearby peaks and can get stuck on a local one.','The more the parts depend on each other, the more rugged the landscape.','When others adapt, your landscape changes shape.'],'axes n yes bounded uneven one discrete same changing'),
+V('hutch','sci','The range of conditions where it can survive','Ecology','Hutchinson, "Concluding Remarks" (1957)','Ecological niche',
+ 'Space is the niche: a volume in many dimensions, one for each condition the population needs to survive.',
+ ['Each environmental condition is one axis.','The fundamental niche is the full region where the population could persist.','The realized niche is the smaller region left after competition.'],'axes n yes bounded flat one continuous same changing'),
+V('or','sci','Every choice the constraints allow','Operations research','Dantzig, linear programming (1947)','Feasible region',
+ 'Space is the feasible region: every combination of decisions that satisfies all the constraints.',
+ ['Each decision variable is one axis.','Each constraint cuts the space in two and keeps one side.','What remains is the feasible region.','With linear constraints, if a best answer exists, one lies at a corner.'],'axes 2 yes bounded flat one continuous set static'),
+V('shannon','sci','Every message that could be sent','Information theory','Shannon (1948, 1949)','Information theory',
+ 'Space is the set of all messages that could have been sent, each with a probability.',
+ ['Information is a selection from the set of possible messages.','A larger or more even set means more information per selection.','Signals can be treated as points; noise moves a point a short distance.','A channel has a fixed capacity that reliable signaling cannot exceed.'],'distance n yes bounded flat one discrete same static'),
+V('network','sci','Who is connected to whom','Network science','Euler (1736); Watts & Strogatz (1998)','Network science',
+ 'Space is the web of connections. Position means who you are linked to.',
+ ['Location is defined by links, with no coordinates.','Distance is the number of steps along the shortest path.','A few long links make a large network small.','The neighbors of a node tend to be linked to each other (clustering).'],'links n yes bounded flat one discrete same changing'),
+V('behav','econ','The options as they are framed','Behavioral economics','Simon (1955); Kahneman & Tversky (1979); Tversky & Kahneman (1981)','Prospect theory',
+ 'Space is the set of options as the decision-maker frames them, valued as gains and losses from a reference point.',
+ ['Outcomes are valued relative to a reference point, not in absolute terms.','A loss weighs more than a gain of the same size.','Reframing the same options changes the choice.','Only a limited set of options is ever considered (bounded rationality).'],'axes 2 yes bounded flat one continuous viewpoint changing'),
+V('instecon','econ','The rules of the game and the cost of dealing','Institutional economics','Coase (1937); Williamson (1975, 1985); North (1990)','New institutional economics',
+ 'Space is the set of formal and informal rules that fix what it costs to make an exchange.',
+ ['Formal rules (laws, contracts) and informal ones (norms) both constrain.','Every exchange carries a transaction cost.','Markets and hierarchies are alternative ways to govern an exchange, chosen to economize on that cost.','Institutions change slowly and depend on the path already taken.'],'links n yes bounded flat one discrete same changing'),
+V('ostrom','econ','The arena and its rules of use','Institutional analysis (commons)','Ostrom, Understanding Institutional Diversity (2005)','Institutional analysis and development framework',
+ 'Space is the action arena, shaped from outside by physical conditions, community attributes and the rules in use.',
+ ['Boundary rules: who may enter and leave.','Position and choice rules: what roles exist and what each may do.','Information and aggregation rules: who knows what, and how decisions combine.','Payoff and scope rules: what actions cost or earn, and which outcomes are allowed.'],'links n no bounded flat one discrete same changing'),
+V('capm','econ','Risk set against return','Capital markets','Markowitz (1952); Sharpe (1964); Fama (1970)','Modern portfolio theory',
+ 'Space is the plane of risk and expected return, on which every asset and portfolio is a point.',
+ ['Every investment is one point: risk on one axis, expected return on the other.','The efficient frontier bounds the combinations that can be reached.','Only risk that cannot be diversified away earns a return.','Prices reflect the information available, so the points move as news arrives.'],'axes 2 yes bounded flat one continuous same changing'),
+V('bourdieu','soc','Positions set by the kinds of capital held','Social space and fields','Bourdieu, Distinction (1979); "The Social Space and the Genesis of Groups" (1985)','Field theory (sociology)',
+ 'Space is social space: positions defined by how much capital a person or group holds and of what kind.',
+ ['One axis is the total volume of capital; another is its mix of economic and cultural capital.','Positions exist only relative to one another.','A field is an arena where the holders of positions compete over what counts as capital.','Those close in social space tend to share tastes and dispositions.'],'axes 2 yes bounded flat one continuous same changing'),
+V('luhmann','soc','Everything the system\'s own communication leaves out','Social systems theory','Luhmann, Social Systems (1984)','Niklas Luhmann',
+ 'Space is the environment a social system creates by distinguishing itself from everything else.',
+ ['A system exists only as a difference from its environment.','The environment is always more complex than the system.','A social system is made of communications, and only its own communications continue it.','The system observes its environment only in its own terms.'],'regions n no unbounded flat one discrete set changing'),
+V('socnet','soc','Ties between people, strong and weak','Social networks','Granovetter (1973, 1985); Burt (1992)','Social network analysis',
+ 'Space is the pattern of ties among people and groups.',
+ ['A position is defined by its ties.','Weak ties carry new information between groups.','A gap between groups is a structural hole; whoever bridges it gains advantage.','Economic action is embedded in these ties.'],'links n yes bounded flat one discrete same changing'),
+V('socdist','soc','How near or far groups feel from one another','Social distance','Bogardus (1925); Sorokin (1927)','Social distance',
+ 'Space is social distance: the degree of closeness or remoteness people accept between themselves and others.',
+ ['Bogardus: distance is measured by the closest relationship a person will accept.','Sorokin: social space is quite different from geometrical space.','Sorokin: movement through social space is social mobility.'],'distance 2 yes unbounded flat one continuous set changing'),
+V('lewin','soc','The situation as the person experiences it','Field theory (psychology)','Lewin, Principles of Topological Psychology (1936); Lewin (1938)','Field theory (psychology)',
+ 'Space is the life space: the person and the environment as that person experiences it at this moment.',
+ ['Behavior is a function of person and environment together.','Only the present field has effects.','The space is made of regions separated by boundaries of varying firmness.','Forces in the field have direction, strength and a point of application.'],'regions 2 no bounded flat one continuous set changing')
+];
+const PROPS=[
+ {id:'pos',k:'Position',plain:'How do you say where something is?',opts:[['axes','Coordinates on axes'],['distance','Distance and direction'],['regions','Regions and borders'],['links','Links']]},
+ {id:'dims',k:'Dimensions',plain:'How many independent measures does it take?',opts:[['1','One'],['2','Two'],['3','Three'],['n','Many']]},
+ {id:'dist',k:'Distance',plain:'Can you say how far apart two things are?',opts:[['yes','Measurable'],['no','Not defined']]},
+ {id:'extent',k:'Extent',plain:'Does the space run out?',opts:[['bounded','Has an edge'],['unbounded','No edge']]},
+ {id:'shape',k:'Shape',plain:'Do the same measuring rules hold everywhere?',opts:[['flat','Flat'],['closes','Closes on itself'],['opens','Opens outward'],['uneven','Uneven']]},
+ {id:'scale',k:'Scale',plain:'Does the pattern repeat inside itself?',opts:[['one','One scale'],['repeats','Repeats at every scale']]},
+ {id:'grain',k:'Grain',plain:'Smooth, or in separate steps?',opts:[['continuous','Continuous'],['discrete','Discrete']]},
+ {id:'observer',k:'Observer',plain:'Would everyone draw it the same way?',opts:[['same','Same for everyone'],['set','Drawn by the observer'],['viewpoint','Changes with viewpoint']]},
+ {id:'change',k:'Change',plain:'Does the space itself move?',opts:[['static','Fixed'],['changing','Changing']]}
+];
+const RULE={
+ pos:{axes:'Every location is a set of values, one per axis.',distance:'Every location is fixed by how far, and in which direction, it lies from the system.',regions:'A location is the region it falls in. Only borders separate one location from another.',links:'A location is the set of things it is linked to.'},
+ dims:{'1':'One variable describes the whole space.','2':'Two independent variables describe the space.','3':'Three independent variables describe the space.',n:'More variables are needed than can be drawn at once; any picture is a slice.'},
+ dist:{yes:'Near and far are meaningful and can be compared.',no:'Nothing may be claimed about near or far.'},
+ extent:{bounded:'The space has an edge, and some things lie beyond it.',unbounded:'The space has no edge. The boundary of the system is the only limit.'},
+ shape:{flat:'The same measuring rules hold everywhere.',closes:'Travel far enough in a straight line and you return to the start.',opens:'Room multiplies with distance, so most of the space is far away.',uneven:'Height varies from place to place, so the direction of improvement depends on where you stand.'},
+ scale:{one:'The space is described at one level.',repeats:'The same form recurs inside each part and around the whole.'},
+ grain:{continuous:'Between any two locations there is another.',discrete:'Locations are separate and can be counted.'},
+ observer:{same:'Any observer would draw the same space.',set:'The space exists as drawn by a named observer.',viewpoint:'Each viewpoint gives a different drawing of the same scene.'},
+ change:{static:'The space holds still while the system moves in it.',changing:'The space itself moves; any drawing shows one moment.'}
+};
+// What each option does to the drawing
+const SHOW={
+ pos:{axes:'drawn on coordinate axes',distance:'drawn as rings of equal distance',regions:'drawn as regions and borders',links:'drawn as nodes and links'},
+ dims:{'1':'one dimension drawn','2':'two dimensions drawn','3':'three dimensions drawn',n:'many dimensions: side-by-side axes, or a labelled slice'},
+ dist:{yes:'numbers and distances shown',no:'numbers removed; only order or connection remains'},
+ extent:{bounded:'heavy frame marks the edge',unbounded:'arrows show the space continues'},
+ shape:{flat:'flat plane',closes:'drawn on a sphere',opens:'drawn on a hyperbolic disk',uneven:'drawn as a contour landscape'},
+ scale:{one:'one level drawn',repeats:'the system contains a copy of the whole picture'},
+ grain:{continuous:'smooth, no dots',discrete:'dots mark the separate locations'},
+ observer:{same:'no observer shown',set:'observer marked on the drawing',viewpoint:'whole drawing tilted into perspective'},
+ change:{static:'drawing holds still',changing:'outside points drift; marked as moving'}
+};
+const GEOMS=[
+ {id:'euclid',name:'Euclidean',keep:'Distance, angle, shape and size.',drop:'Where the figure sits and which way it faces.',read:'Rings mark equal distance from the system. Each outside point has a measured distance.',src:'Euclid, Elements (c. 300 BC)'},
+ {id:'analytic',name:'Analytic (coordinates)',keep:'The coordinates of every point; each dimension is a named axis.',drop:'Nothing by itself; it is a way of addressing points.',read:'The system is a range on each axis. A point is one value per axis.',src:'Descartes, La Géométrie (1637)'},
+ {id:'affine',name:'Affine',keep:'Straight lines, parallels, and ratios along parallel lines.',drop:'Distance and angle.',read:'The grid is sheared. Parallels stay parallel, but lengths and angles carry no meaning.',src:'Euler (1748); Möbius (1827)'},
+ {id:'projective',name:'Perspective (projective)',keep:'Straight lines and which points lie on which lines.',drop:'Parallels, distance and angle.',read:'Parallel lines meet at the vanishing point. Size depends on where the observer stands.',src:'Alberti (1435); Desargues (1639); Poncelet (1822)'},
+ {id:'topo',name:'Topology',keep:'Connection, inside and outside, boundaries and holes.',drop:'Distance, straightness and angle.',read:'Only the regions and their borders count. Stretching the picture changes nothing.',src:'Euler (1736); Poincaré (1895)'},
+ {id:'sphere',name:'Spherical',keep:'Distance and angle on a closed surface.',drop:'Parallel lines: there are none.',read:'The space is finite but has no edge. Straight paths are great circles, and any two of them meet.',src:'Menelaus, Sphaerica (c. 100 AD); Riemann (1854) for the general case'},
+ {id:'hyper',name:'Hyperbolic',keep:'Distance and angle, with room growing faster than in flat space.',drop:'The single parallel: many lines through a point miss a given line.',read:'Every arc that meets the rim at a right angle is a straight line. The rim is infinitely far away, so there is far more room near it than it looks.',src:'Lobachevsky (1829); Bolyai (1832); disk picture, Beltrami (1868)'},
+ {id:'diff',name:'Differential (curved surface)',keep:'Local distance, slope and curvature.',drop:'Any single flat frame for the whole space.',read:'Contour lines join equal heights. The system sits on a local peak; a higher one lies across a valley.',src:'Gauss (1827); Riemann (1854)'},
+ {id:'graph',name:'Graph (network)',keep:'Who is connected to whom; distance, if used, is counted in steps.',drop:'Position, direction and everything between the nodes.',read:'Filled nodes are the system. Numbers, when shown, count steps from the system.',src:'Euler (1736)'},
+ {id:'fractal',name:'Fractal',keep:'Similar detail at every scale.',drop:'A single natural scale of measurement.',read:'Each system contains smaller systems of the same form and sits inside a larger one.',src:'Mandelbrot, The Fractal Geometry of Nature (1982)'}
+];
+
+const S={views:['ashby'],choice:{},pin:null,last:'',open:null};
+let SAVED=null;
+const $=id=>document.getElementById(id);
+const VW=id=>FIELDS.find(f=>f.id===id);
+const GN=id=>GEOMS.find(g=>g.id===id);
+const PI=id=>PROPS.findIndex(p=>p.id===id);
+const lab=(id,v)=>PROPS[PI(id)].opts.find(o=>o[0]===v)[1];
+function el(t,a,h){const e=document.createElement(t);for(const k in a||{})e.setAttribute(k,a[k]);if(h!=null)e.innerHTML=h;return e}
+// What the selected views ask for, per property
+function wants(st){const w={};PROPS.forEach((P,i)=>{w[P.id]=[];st.views.forEach(v=>{const x=VW(v).p[i];let o=w[P.id].find(a=>a.v===x);if(!o){o={v:x,by:[]};w[P.id].push(o)}o.by.push(VW(v).name)})});return w}
+function raw(st){const w=wants(st),p={};PROPS.forEach(P=>{p[P.id]=(P.id in st.choice)?st.choice[P.id]:w[P.id][0].v});return p}
+// Options that cannot coexist: fix the dependent property and say why
+function norm(p0){const p=Object.assign({},p0),f={};const ax=p.pos==='axes'||p.pos==='distance';
+  if(p.pos==='distance'){p.dist='yes';f.dist='Position by distance requires measurable distance.'}
+  if(p.pos==='regions'){p.dist='no';f.dist='Regions and borders carry no distance.'}
+  if(p.pos==='links'){p.grain='discrete';f.grain='Links join separate things, so the grain is discrete.'}
+  if(!ax){p.dims=null;f.dims='Dimensions apply only when position uses axes or distance.';p.shape='flat';f.shape='Shape applies only when position uses axes or distance.'}
+  else if(p.dist==='no'){p.shape='flat';f.shape='Shape needs measurable distance.'}
+  else if(p.dims==='1'){p.shape='flat';f.shape='Shape needs at least two dimensions.'}
+  if(p.shape==='closes'){p.extent='unbounded';f.extent='A space that closes on itself has no edge.'}
+  if(p.shape==='opens'){p.extent='unbounded';f.extent='A space that opens outward has no edge.'}
+  return{p,f}}
+const E=()=>norm(raw(S)).p;
+const NUM=(a,b)=>E().dist==='yes'?a:(b==null?'':b);
+function baseGeom(p){
+  if(p.pos==='links')return['graph','position is given by links'];
+  if(p.pos==='regions')return['topo','position is given by regions and borders'];
+  if(p.shape==='uneven')return['diff','distance is measurable and the shape is uneven'];
+  if(p.shape==='closes')return['sphere','distance is measurable and the space closes on itself'];
+  if(p.shape==='opens')return['hyper','distance is measurable and the space opens outward'];
+  if(p.pos==='distance')return['euclid','position is given by measured distance and direction'];
+  if(p.dist==='no'&&p.grain==='continuous'&&p.dims==='2')return['affine','position uses axes but distance is not defined, so lengths and angles are dropped'];
+  return['analytic','position is given by coordinates on axes'];}
+function geomName(p){const b=baseGeom(p);let n=GN(b[0]).name.replace(/ \(.*/,'');const m=[];
+  if(p.scale==='repeats')m.push('repeated at every scale');if(p.observer==='viewpoint')m.push('seen in perspective');
+  return n+' geometry'+(m.length?', '+m.join(' and '):'')}
+function sentence(p){const a=['position given by '+lab('pos',p.pos).toLowerCase()];
+  if(p.dims)a.push(lab('dims',p.dims).toLowerCase()+' dimension'+(p.dims==='1'?'':'s'));
+  a.push('distance '+lab('dist',p.dist).toLowerCase(),lab('extent',p.extent).toLowerCase(),lab('shape',p.shape).toLowerCase(),lab('scale',p.scale).toLowerCase(),lab('grain',p.grain).toLowerCase(),lab('observer',p.observer).toLowerCase(),lab('change',p.change).toLowerCase());
+  return 'A space with '+a.join('; ')+'.'}
+function buildRail(){
+  const r=$('rail');
+  GROUPS.forEach(g=>{
+    const d=el('div',{class:'fam'});d.appendChild(el('h3',{},g[1]));
+    FIELDS.filter(f=>f.grp===g[0]).forEach(f=>{
+      const v=el('div',{class:'view',id:f.id}),row=el('div',{class:'vrow'});
+      const b=el('button',{class:'opt',type:'button',id:'opt-'+f.id,role:'checkbox','aria-checked':'false'},'<span class="box" aria-hidden="true"></span><span><b>'+f.plain+'</b><span class="sub">'+f.name+'</span></span>');
+      b.addEventListener('click',()=>toggleView(f.id));
+      const m=el('button',{class:'more',type:'button',id:'more-'+f.id,'aria-expanded':'false'},'Describe');
+      m.addEventListener('click',()=>{S.open=S.open===f.id?null:f.id;keep();render()});
+      row.appendChild(b);row.appendChild(m);v.appendChild(row);
+      const dt=el('div',{class:'detail',id:'detail-'+f.id},'<p>'+f.def+'</p><p><b>Its rules</b></p><ol>'+f.rules.map(x=>'<li>'+x+'</li>').join('')+'</ol><p>Source: '+f.src+'</p><p><a href="https://en.wikipedia.org/wiki/Special:Search?search='+encodeURIComponent(f.w)+'" target="_blank" rel="noopener">Look it up: '+f.w+'</a></p>');
+      dt.hidden=true;v.appendChild(dt);d.appendChild(v);
+    });
+    r.appendChild(d);
+  });
+}
+let flashNext=false;
+function toggleView(id){const i=S.views.indexOf(id);
+  if(i>=0){if(S.views.length===1){S.last='At least one view must stay selected.';render();return}S.views.splice(i,1);S.last='View removed: '+VW(id).name+'.'}
+  else{S.views.push(id);S.last='View added: '+VW(id).name+'.'}
+  S.pin=null;flashNext=true;keep();render()}
+function setProp(id,v){S.choice[id]=v;S.pin=null;S.last=PROPS[PI(id)].k+' set to '+lab(id,v)+': '+SHOW[id][v]+'.';flashNext=true;keep();render()}
+function sameState(a,b){return a&&b&&a.views.join()===b.views.join()&&JSON.stringify(raw(a))===JSON.stringify(raw(b))}
+function render(){
+  const w=wants(S),r=raw(S),nm=norm(r),p=nm.p,f=nm.f;
+  FIELDS.forEach(x=>{const on=S.views.includes(x.id);$(x.id).classList.toggle('on',on);$('opt-'+x.id).setAttribute('aria-checked',on);$('opt-'+x.id).querySelector('.box').textContent=on?'✓':'';
+    $('detail-'+x.id).hidden=S.open!==x.id;$('more-'+x.id).setAttribute('aria-expanded',S.open===x.id);$('more-'+x.id).textContent=S.open===x.id?'Close':'Describe'});
+  $('fname').textContent=S.views.map(v=>VW(v).name).join(' + ');
+  const open=PROPS.filter(P=>!f[P.id]&&w[P.id].length>1&&!(P.id in S.choice)),split=PROPS.filter(P=>!f[P.id]&&w[P.id].length>1);
+  const co=$('coexist');
+  if(S.views.length===1){co.className='fit';co.textContent='One view selected. Add more views to combine them.'}
+  else if(!split.length){co.className='fit';co.textContent='These views agree on every property that applies, so they coexist as they are.'}
+  else if(open.length){co.className='fit bad';co.textContent='These views cannot all hold at once on: '+open.map(P=>P.k).join(', ')+'. Choose one option for each, marked below. Until you do, the first view selected is used.'}
+  else{co.className='fit';co.textContent='These views disagreed on '+split.map(P=>P.k).join(', ')+'. Your choices settle it.'}
+  const pr=$('props');pr.innerHTML='';
+  PROPS.forEach(P=>{
+    const conflict=open.includes(P),wr=el('div',{class:'prop'+(conflict?' conflict':'')});
+    wr.appendChild(el('div',{class:'k'},P.k));wr.appendChild(el('p',{class:'plain'},P.plain));
+    const s=el('div',{class:'seg',role:'group','aria-label':P.k});
+    P.opts.forEach(o=>{const b=el('button',{type:'button','aria-pressed':String(p[P.id]===o[0])},o[1]);
+      if(f[P.id])b.disabled=true;
+      if(!f[P.id]&&w[P.id].length>1&&w[P.id].some(a=>a.v===o[0]))b.classList.add('want');
+      b.addEventListener('click',()=>setProp(P.id,o[0]));s.appendChild(b)});
+    wr.appendChild(s);
+    if(f[P.id])wr.appendChild(el('p',{class:'why'},f[P.id]));
+    else if(w[P.id].length>1)wr.appendChild(el('p',{class:'why'+(conflict?' open':'')},(conflict?'Views disagree. Choose one: ':'Views disagreed: ')+w[P.id].map(a=>lab(P.id,a.v)+' ('+a.by.join(', ')+')').join('; ')+'.'));
+    else if((P.id in S.choice)&&S.choice[P.id]!==w[P.id][0].v)wr.appendChild(el('p',{class:'why'},'Your choice. The view'+(S.views.length>1?'s say ':' says ')+lab(P.id,w[P.id][0].v)+'.'));
+    pr.appendChild(wr);
+  });
+  $('reset').hidden=!Object.keys(S.choice).length;
+  $('state').textContent=sentence(p);
+  $('vrules').innerHTML=S.views.map(v=>{const x=VW(v);return '<div><p class="src" style="color:var(--navy);font-weight:600">'+x.name+'</p><ol class="rules">'+x.rules.map(q=>'<li>'+q+'</li>').join('')+'</ol></div>'}).join('');
+  $('prules').innerHTML=PROPS.filter(P=>p[P.id]!=null).map(P=>'<li>'+RULE[P.id][p[P.id]]+'</li>').join('');
+  // ---- drawing
+  const b=baseGeom(p),gid=S.pin||b[0],g=GN(gid),pinned=S.pin&&S.pin!==b[0];
+  $('gname').textContent=pinned?g.name+' (comparison)':geomName(p);
+  const fit=$('fit');
+  if(pinned){fit.className='fit bad';fit.textContent='You are comparing '+g.name.toLowerCase()+'. Your choices call for '+geomName(p).toLowerCase()+'.'}
+  else{fit.className='fit';fit.textContent='Chosen by your selections: '+b[1]+'.'}
+  $('gkeep').textContent=g.keep;$('gdrop').textContent=g.drop;$('gread').textContent=g.read;$('gsrc').textContent=g.src;
+  const gt=$('gtabs');gt.innerHTML='';
+  const fb=el('button',{type:'button','aria-pressed':String(!pinned)},'Follow my choices');fb.addEventListener('click',()=>{S.pin=null;S.last='Drawing follows your choices again.';flashNext=true;keep();render()});gt.appendChild(fb);
+  GEOMS.forEach(x=>{if(x.id===b[0])return;const t=el('button',{type:'button','aria-pressed':String(S.pin===x.id)},x.name);t.addEventListener('click',()=>{S.pin=x.id;S.last='Comparing '+x.name+'.';flashNext=true;keep();render()});gt.appendChild(t)});
+  let svg=DRAW[gid]();
+  if(p.dims&&p.dims!=='2'&&['sphere','hyper','diff'].includes(gid))svg+='<rect x="120" y="4" width="360" height="22" fill="#f6f4ee" fill-opacity="0.9"/>'+T(300,20,'A two-dimensional slice of '+(p.dims==='3'?'three':'many')+' dimensions',{a:'middle',c:'#1f4d36'});
+  if(['sphere','hyper','diff'].includes(gid)&&!S.pin){
+    if(p.pos==='axes')svg+='<path d="M28 352 L28 250 M28 352 L130 352" fill="none" stroke="#16242e" stroke-width="2"/><path d="M22 256 L28 244 L34 256 Z M124 346 L136 352 L124 358 Z" fill="#16242e"/>'+T(34,246,'variable 2',{z:11})+T(60,346,'variable 1',{z:11});
+    else{const a=anchor(gid,p),q={sphere:[380,270],hyper:[418,126],diff:[430,160]}[gid];svg+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="#16242e" stroke-width="2" stroke-dasharray="6 4"/><rect x="'+(a[0]+(q[0]-a[0])*0.72-34)+'" y="'+(a[1]+(q[1]-a[1])*0.72-12)+'" width="68" height="18" fill="#f6f4ee"/>'+T(a[0]+(q[0]-a[0])*0.72,a[1]+(q[1]-a[1])*0.72+2,'measured',{a:'middle',z:11})}
+  }
+  if(p.scale==='repeats'&&gid!=='fractal'){const a=anchor(gid,p),G=x=>'<g transform="translate('+a[0]+' '+a[1]+') scale(0.24) translate(-300 -190)"><rect x="-10" y="-10" width="620" height="400" fill="#f6f4ee" stroke="#16242e" stroke-width="12"/>'+x+'</g>';svg=svg+G(svg+G(svg))}
+  if(p.grain==='discrete'&&gid!=='graph'&&gid!=='fractal'){
+    const t=gid==='analytic'&&p.dims==='2'?'translate(46,18)':'translate(2,-1)',clip=gid==='sphere'?'<clipPath id="cl"><circle cx="300" cy="190" r="150"/></clipPath>':gid==='hyper'?'<clipPath id="cl"><circle cx="300" cy="188" r="160"/></clipPath>':'';
+    svg+='<defs><pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse" patternTransform="'+t+'"><circle cx="24" cy="24" r="2.6" fill="#16242e"/><circle cx="0" cy="0" r="2.6" fill="#16242e"/></pattern>'+clip+'</defs><rect x="0" y="0" width="600" height="380" fill="url(#dots)" fill-opacity="0.38"'+(clip?' clip-path="url(#cl)"':'')+'/>'}
+  if(gid!=='sphere'&&gid!=='hyper'){
+    if(p.extent==='bounded')svg+='<rect x="5" y="5" width="590" height="370" fill="none" stroke="#16242e" stroke-width="7"/>';
+    else svg+=[[566,10,0],[590,150,90],[34,370,180],[10,230,270]].map(a=>'<path d="M-13 10 L0 -9 L13 10 Z" fill="#1f4d36" transform="translate('+a[0]+','+a[1]+') rotate('+a[2]+')"/>').join('')}
+  const cv=$('canvas'),tilt=p.observer==='viewpoint'&&gid!=='projective';
+  cv.className='canvas'+(tilt?' tilt':'');
+  cv.innerHTML='<svg viewBox="0 0 600 380" class="'+(p.change==='changing'?'chg':'')+'" role="img" aria-label="'+g.name+' drawing of a system in its space">'+svg+'</svg>'+(p.change==='changing'?'<span class="badge tl">moving</span>':'')+(p.observer!=='same'?'<span class="badge bl">'+(p.observer==='set'?'as one observer draws it':'from one viewpoint')+'</span>':'');
+  if(flashNext){cv.classList.remove('flash');void cv.offsetWidth;cv.classList.add('flash');flashNext=false}
+  $('last').textContent=S.last||'Change any option and the drawing changes here.';
+  $('chips').innerHTML=PROPS.filter(P=>p[P.id]!=null).map(P=>'<span class="chip">'+P.k+': '+SHOW[P.id][p[P.id]]+'</span>').join('');
+  const clean=sameState(S,SAVED);
+  $('save').disabled=clean;$('revert').disabled=!SAVED||clean;
+  $('status').textContent=!SAVED?'Not saved yet.':clean?'Saved. These choices carry into Element 2.':'Changed since last save.';
+  carry();
+}
+function anchor(gid,p){if(gid==='analytic')return{'1':[280,200],'2':[286,186],'3':[300,150],n:[300,190]}[p.dims]||[300,190];
+  return{euclid:[290,195],affine:[300,180],topo:[300,190],sphere:[300,150],hyper:[300,188],diff:[195,215],graph:[292,200],projective:[300,258]}[gid]}
+function carry(){
+  const t=$('carry'),n=$('carrynote');
+  if(!SAVED){t.innerHTML='';n.textContent='Nothing saved yet. Select views, settle the properties, then press Save Space. The saved choices will appear here as limits on the Boundary.';return}
+  const p=norm(raw(SAVED)).p,g=baseGeom(p)[0];
+  n.textContent='Saved: '+SAVED.views.map(v=>VW(v).name).join(' + ')+', drawn in '+geomName(p).toLowerCase()+'. '+sentence(p);
+  let form={analytic:'A limit on each axis (a range)',affine:'A limit on each axis (a range)',euclid:'A perimeter at a set distance from the center',topo:'A closed border around a region',graph:'A cut: the set of links that cross it',sphere:'A closed loop; inside and outside are both finite',hyper:'A perimeter that grows much faster than its radius',diff:'A contour or ridge line'}[g];
+  if(p.scale==='repeats')form+=', repeated at every level';
+  const rows=[['Position: '+lab('pos',p.pos)+'; '+lab('scale',p.scale),'Form of the boundary',form,1]];
+  if(p.dims)rows.push(['Dimensions: '+lab('dims',p.dims),'Dimension of the boundary',{'1':'Two end points','2':'A line','3':'A surface',n:'One dimension fewer than the space'}[p.dims],1]);
+  rows.push(['Observer: '+lab('observer',p.observer),'Who sets the boundary',{same:'Found: the same boundary for every observer',set:'Drawn by the observer who defined the space',viewpoint:'One boundary per viewpoint'}[p.observer],1]);
+  rows.push(['Grain: '+lab('grain',p.grain),'Sharpness',p.grain==='discrete'?'Crisp only: each location is in or out':'Crisp or gradual',p.grain==='discrete'?1:0]);
+  rows.push(['Change: '+lab('change',p.change),'Upkeep',p.change==='static'?'Can be set once':'Must be redrawn as the space moves',1]);
+  rows.push(['Extent: '+lab('extent',p.extent),'Limits to track',p.extent==='bounded'?'Two: the system boundary and the edge of the space':'One: the system boundary',1]);
+  rows.push(['(not set by Space)','Openness','Open or closed',0]);
+  t.innerHTML='<tr><th>Space choice</th><th>Boundary property</th><th>Result</th><th>Status</th></tr>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td><span class="tag'+(r[3]?'':' open')+'">'+(r[3]?'fixed by Space':'choose in Element 2')+'</span></td></tr>').join('');
+}
+// ---------- drawings (literal hex by brand rule) ----------
+const C={f:'#1f4d36',m:'#6f8f74',s:'#aebfa6',c:'#f6f4ee',n:'#16242e',w:'#e6ebe0'};
+const T=(x,y,t,o)=>'<text x="'+x+'" y="'+y+'" font-family="Public Sans,sans-serif" font-size="'+((o&&o.z)||12)+'" fill="'+((o&&o.c)||C.n)+'" text-anchor="'+((o&&o.a)||'start')+'">'+t+'</text>';
+const PT=(x,y,l)=>'<circle class="env" cx="'+x+'" cy="'+y+'" r="5" fill="'+C.n+'"/>'+T(x+9,y+4,l);
+const BG='<rect x="0" y="0" width="600" height="380" fill="'+C.c+'"/>';
+const ENV=[[120,90,'A'],[485,105,'B'],[440,305,'C']];
+const DRAW={
+ euclid(){let o=BG;[70,130,190,250].forEach(r=>o+='<circle cx="290" cy="195" r="'+r+'" fill="none" stroke="'+C.s+'" stroke-width="1"/>');
+  ENV.forEach(p=>{const d=Math.hypot(p[0]-290,p[1]-195);o+='<line x1="290" y1="195" x2="'+p[0]+'" y2="'+p[1]+'" stroke="'+C.m+'" stroke-width="1.5" stroke-dasharray="5 4"/>'+T((p[0]+290)/2+6,(p[1]+195)/2-6,(d/20).toFixed(1)+' units',{c:C.f})+PT(p[0],p[1],p[2])});
+  return o+'<circle cx="290" cy="195" r="42" fill="'+C.f+'"/>'+T(290,199,'System',{a:'middle',c:C.c})},
+ analytic(){const d=E().dims||'2';let o=BG;
+  if(d==='1'){o+='<line x1="50" y1="200" x2="560" y2="200" stroke="'+C.n+'" stroke-width="1.5"/>';for(let i=0;i<=10;i++)o+='<line x1="'+(60+i*49)+'" y1="194" x2="'+(60+i*49)+'" y2="206" stroke="'+C.n+'" stroke-width="1"/>'+T(60+i*49,224,NUM(i),{a:'middle',c:C.m});
+   o+='<rect x="207" y="186" width="147" height="28" fill="'+C.f+'"/>'+T(280,176,NUM('System: 3 to 6','System'),{a:'middle',c:C.f})+PT(109,200,'')+T(109,172,NUM('A = 1','A'),{a:'middle'})+PT(452,200,'')+T(452,172,NUM('B = 8','B'),{a:'middle'})+T(560,250,'variable 1',{a:'end',c:C.m});return o}
+  if(d==='2'){for(let i=0;i<=10;i++){o+='<line x1="'+(70+i*48)+'" y1="40" x2="'+(70+i*48)+'" y2="330" stroke="'+C.w+'" stroke-width="1"/>';if(i<=6)o+='<line x1="70" y1="'+(330-i*48)+'" x2="550" y2="'+(330-i*48)+'" stroke="'+C.w+'" stroke-width="1"/>'+T(60,334-i*48,NUM(i),{a:'end',c:C.m});o+=T(70+i*48,348,NUM(i),{a:'middle',c:C.m})}
+   o+='<line x1="70" y1="330" x2="560" y2="330" stroke="'+C.n+'" stroke-width="1.5"/><line x1="70" y1="330" x2="70" y2="30" stroke="'+C.n+'" stroke-width="1.5"/>';
+   o+='<rect x="214" y="138" width="144" height="96" fill="'+C.f+'" fill-opacity="0.9"/>'+T(286,190,'System',{a:'middle',c:C.c})+T(286,128,NUM('3 to 6 on axis 1, 2 to 4 on axis 2','a range on each axis'),{a:'middle',c:C.f});
+   o+='<line x1="454" y1="90" x2="454" y2="330" stroke="'+C.m+'" stroke-dasharray="4 4" stroke-width="1"/><line x1="70" y1="90" x2="454" y2="90" stroke="'+C.m+'" stroke-dasharray="4 4" stroke-width="1"/>'+PT(454,90,NUM('B (8, 5)','B'))+PT(118,282,NUM('A (1, 1)','A'));
+   return o+T(556,368,'variable 1',{a:'end',c:C.m})+T(78,34,'variable 2',{c:C.m})}
+  if(d==='3'){const P=(x,y,z)=>[300+(x-y)*24,175+(x+y)*10-z*24];const L=(a,b,st,w,da)=>'<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="'+st+'" stroke-width="'+w+'"'+(da?' stroke-dasharray="4 4"':'')+'/>';
+   o+=L(P(0,0,0),P(9,0,0),C.n,1.5)+L(P(0,0,0),P(0,9,0),C.n,1.5)+L(P(0,0,0),P(0,0,6),C.n,1.5);
+   for(let i=1;i<=8;i++)o+=L(P(i,0,0),P(i,8,0),C.w,1)+L(P(0,i,0),P(8,i,0),C.w,1);
+   const b=[[2,2,1],[5,2,1],[5,5,1],[2,5,1],[2,2,4],[5,2,4],[5,5,4],[2,5,4]].map(v=>P(...v));const poly=(ix,op)=>'<polygon points="'+ix.map(i=>b[i].join(',')).join(' ')+'" fill="'+C.f+'" fill-opacity="'+op+'" stroke="'+C.f+'" stroke-width="1"/>';
+   o+=poly([4,5,6,7],0.95)+poly([1,2,6,5],0.75)+poly([3,2,6,7],0.6)+T(b[6][0],b[6][1]-24,'System',{a:'middle',c:C.c});
+   const q=P(7,1,5),q0=P(7,1,0);o+=L(q,q0,C.m,1,1)+PT(q[0],q[1],NUM('B (7, 1, 5)','B'));
+   const e1=P(9,0,0),e2=P(0,9,0),e3=P(0,0,6);return o+T(e1[0]+8,e1[1]+14,'variable 1',{c:C.m})+T(e2[0]-8,e2[1]+14,'variable 2',{a:'end',c:C.m})+T(e3[0]+8,e3[1]+4,'variable 3',{c:C.m})}
+  const xs=[70,162,254,346,438,530],lo=[.3,.45,.2,.5,.35,.4],hi=[.6,.8,.55,.75,.7,.65],Y=v=>320-v*260;
+  o+='<polygon points="'+xs.map((x,i)=>x+','+Y(hi[i])).join(' ')+' '+xs.map((x,i)=>x+','+Y(lo[i])).reverse().join(' ')+'" fill="'+C.f+'" fill-opacity="0.85"/>';
+  [[.1,.9,.7,.2,.9,.15,'A'],[.85,.2,.9,.95,.1,.9,'B']].forEach(r=>{o+='<polyline points="'+xs.map((x,i)=>x+','+Y(r[i])).join(' ')+'" fill="none" stroke="'+C.n+'" stroke-width="1.5"/>'+T(xs[5]+8,Y(r[5])+4,r[6])});
+  xs.forEach((x,i)=>{o+=T(x-6,64,NUM('10'),{a:'end',c:C.m,z:10})+T(x-6,322,NUM('0'),{a:'end',c:C.m,z:10})+'<line x1="'+x+'" y1="60" x2="'+x+'" y2="320" stroke="'+C.n+'" stroke-width="1.5"/>'+T(x,342,'variable '+(i+1),{a:'middle',c:C.m})});
+  return o+T(300,36,'One vertical axis per variable. The band is the system; each line is one outside point.',{a:'middle',c:C.f})},
+ affine(){let o=BG+'<g transform="matrix(1 0 -0.55 0.8 190 50)">';for(let i=0;i<=9;i++)o+='<line x1="'+(i*50)+'" y1="0" x2="'+(i*50)+'" y2="350" stroke="'+C.s+'" stroke-width="1"/>';for(let j=0;j<=7;j++)o+='<line x1="0" y1="'+(j*50)+'" x2="450" y2="'+(j*50)+'" stroke="'+C.s+'" stroke-width="1"/>';
+  o+='<rect x="150" y="100" width="150" height="100" fill="'+C.f+'"/><circle cx="50" cy="50" r="6" fill="'+C.n+'"/><circle cx="400" cy="100" r="6" fill="'+C.n+'"/><circle cx="350" cy="300" r="6" fill="'+C.n+'"/></g>';
+  return o+T(300,180,'System',{a:'middle',c:C.c})+T(222,84,'A')+T(548,128,'B')+T(388,300,'C')+T(300,368,'Opposite sides stay parallel. Lengths and angles are not preserved.',{a:'middle',c:C.f})},
+ projective(){let o=BG+'<rect x="0" y="0" width="600" height="110" fill="'+C.w+'"/><line x1="0" y1="110" x2="600" y2="110" stroke="'+C.n+'" stroke-width="1.5"/>';
+  for(let i=-8;i<=8;i++)o+='<line x1="300" y1="110" x2="'+(300+i*110)+'" y2="380" stroke="'+C.s+'" stroke-width="1"/>';
+  [118,130,148,175,216,278,372].forEach(y=>o+='<line x1="0" y1="'+y+'" x2="600" y2="'+y+'" stroke="'+C.s+'" stroke-width="1"/>');
+  const X=(u,y)=>300+u*(y-110)/270*110;o+='<polygon points="'+X(-1,216)+',216 '+X(1,216)+',216 '+X(1,300)+',300 '+X(-1,300)+',300" fill="'+C.f+'"/>'+T(300,264,'System',{a:'middle',c:C.c});
+  o+='<circle cx="'+X(-3,140)+'" cy="140" r="3" fill="'+C.n+'"/>'+T(X(-3,140)+7,144,'A (far)',{z:10})+'<circle cx="'+X(3.2,190)+'" cy="190" r="5" fill="'+C.n+'"/>'+T(X(3.2,190)+9,194,'B')+'<circle cx="'+X(-2.6,340)+'" cy="340" r="9" fill="'+C.n+'"/>'+T(X(-2.6,340)+14,345,'C (near)',{z:14});
+  return o+'<circle cx="300" cy="110" r="4" fill="'+C.f+'"/>'+T(310,100,'vanishing point',{c:C.f})+T(12,100,'horizon',{c:C.m})+T(300,24,'The observer stands at the bottom edge. Move the observer and every size changes.',{a:'middle',c:C.f})},
+ topo(){return BG+'<path d="M70 190 C60 80 190 30 300 50 C430 20 560 90 540 200 C560 310 420 360 300 340 C170 370 60 310 70 190 Z" fill="'+C.w+'" stroke="'+C.m+'" stroke-width="1.5" stroke-dasharray="6 5"/>'+T(110,90,'Space',{c:C.m})+
+  '<path d="M210 190 C200 130 280 100 330 120 C400 110 430 180 400 230 C390 290 300 290 260 270 C215 265 205 230 210 190 Z" fill="'+C.f+'" stroke="'+C.n+'" stroke-width="3"/>'+T(300,170,'System (inside)',{a:'middle',c:C.c})+
+  '<path d="M270 215 C275 195 320 195 335 210 C350 235 320 255 295 250 C272 248 266 232 270 215 Z" fill="'+C.m+'" stroke="'+C.c+'" stroke-width="1.5"/>'+T(303,228,'part',{a:'middle',c:C.c,z:11})+
+  '<path d="M120 240 C115 215 160 205 175 225 C190 250 165 275 140 268 C125 264 122 252 120 240 Z" fill="'+C.c+'" stroke="'+C.m+'" stroke-width="1.5"/>'+T(147,244,'hole',{a:'middle',c:C.m,z:11})+
+  PT(470,130,'A (outside)')+PT(455,270,'B (outside)')+T(300,320,'boundary',{a:'middle',c:C.n})+T(300,372,'Stretch or bend this picture however you like: the regions and borders stay the same.',{a:'middle',c:C.f})},
+ sphere(){let o=BG+'<circle cx="300" cy="190" r="150" fill="'+C.w+'" stroke="'+C.n+'" stroke-width="1.5"/>';
+  [30,75,115].forEach(r=>o+='<ellipse cx="300" cy="190" rx="'+r+'" ry="150" fill="none" stroke="'+C.s+'" stroke-width="1"/>');[40,90].forEach(d=>{const rx=Math.sqrt(150*150-d*d);o+='<ellipse cx="300" cy="'+(190-d)+'" rx="'+rx+'" ry="'+rx*0.22+'" fill="none" stroke="'+C.s+'" stroke-width="1"/><ellipse cx="300" cy="'+(190+d)+'" rx="'+rx+'" ry="'+rx*0.22+'" fill="none" stroke="'+C.s+'" stroke-width="1"/>'});
+  o+='<ellipse cx="300" cy="190" rx="150" ry="33" fill="none" stroke="'+C.m+'" stroke-width="1.5"/>';
+  o+='<path d="M300 60 Q215 120 225 205 Q300 222 375 205 Q385 120 300 60 Z" fill="'+C.f+'" fill-opacity="0.9" stroke="'+C.n+'" stroke-width="1.5"/>'+T(300,150,'System',{a:'middle',c:C.c})+T(300,172,'triangle with three',{a:'middle',c:C.c,z:10})+T(300,185,'right angles',{a:'middle',c:C.c,z:10});
+  return o+PT(380,270,'A')+PT(215,285,'B')+T(300,368,'Finite area, no edge. Any two straight paths eventually cross.',{a:'middle',c:C.f})},
+ hyper(){const cx=300,cy=188,R=160;let o=BG+'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="'+C.w+'" stroke="'+C.n+'" stroke-width="1.5"/>';
+  const geo=(a,b)=>{const h=(b-a)/2,r=R*Math.tan(h),p=t=>(cx+R*Math.cos(t)).toFixed(1)+' '+(cy+R*Math.sin(t)).toFixed(1);return '<path d="M'+p(a)+' A'+r.toFixed(1)+' '+r.toFixed(1)+' 0 0 0 '+p(b)+'" fill="none" stroke="'+C.m+'" stroke-width="1"/>'};
+  for(let k=0;k<8;k++){const a=k*Math.PI/4;o+=geo(a+0.12,a+Math.PI/4-0.12);o+=geo(a-0.5,a+0.5)}
+  for(let k=0;k<16;k++){const a=k*Math.PI/8+Math.PI/16;o+=geo(a-0.13,a+0.13)}
+  o+='<line x1="'+(cx-R)+'" y1="'+cy+'" x2="'+(cx+R)+'" y2="'+cy+'" stroke="'+C.s+'" stroke-width="1"/><line x1="'+cx+'" y1="'+(cy-R)+'" x2="'+cx+'" y2="'+(cy+R)+'" stroke="'+C.s+'" stroke-width="1"/>';
+  o+='<circle cx="'+cx+'" cy="'+cy+'" r="34" fill="'+C.f+'"/>'+T(cx,cy+4,'System',{a:'middle',c:C.c,z:11})+'<circle cx="'+(cx+118)+'" cy="'+(cy-62)+'" r="4" fill="'+C.n+'"/>'+T(cx+126,cy-60,'A',{z:11})+'<circle cx="'+(cx-96)+'" cy="'+(cy+102)+'" r="3" fill="'+C.n+'"/>'+T(cx-90,cy+106,'B',{z:10});
+  return o+T(300,370,'Regions near the rim are as large as those at the center. The rim is infinitely far.',{a:'middle',c:C.f})},
+ diff(){let o=BG;const ring=(x,y,rx,ry,n,rot)=>{let s='';for(let i=n;i>=1;i--)s+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+(rx*i/n)+'" ry="'+(ry*i/n)+'" transform="rotate('+rot+' '+x+' '+y+')" fill="'+(['#f6f4ee','#e6ebe0','#cfd9c8','#aebfa6','#8ba88c','#6f8f74'][n-i]||C.m)+'" stroke="'+C.m+'" stroke-width="1"/>';return s};
+  o+=ring(195,215,150,105,4,-12)+ring(430,160,150,125,6,18);
+  o+='<circle cx="195" cy="215" r="13" fill="'+C.f+'" stroke="'+C.c+'" stroke-width="2"/>'+T(195,250,'System, on a local peak',{a:'middle',c:C.n})+'<circle cx="430" cy="160" r="5" fill="'+C.n+'"/>'+T(430,146,'higher peak',{a:'middle',c:C.c})+T(318,300,'valley between',{a:'middle',c:C.m});
+  return o+T(300,368,'Darker means higher. Every small step from the system leads down before it can lead up.',{a:'middle',c:C.f})},
+ graph(){const N=[[290,190,0],[240,140,0],[345,150,0],[300,250,0],[150,110,1],[430,90,1],[440,220,1],[210,290,1],[80,200,2],[520,150,2],[500,310,2],[120,320,2],[550,250,3]],ED=[[0,1],[0,2],[0,3],[1,2],[1,4],[2,5],[2,6],[3,7],[3,6],[4,8],[5,9],[6,10],[7,11],[8,11],[9,12],[10,12],[4,5]];
+  let o=BG+'<path d="M215 120 L370 125 L330 280 L270 280 Z" fill="'+C.w+'" stroke="'+C.m+'" stroke-width="1" stroke-dasharray="5 4"/>';
+  ED.forEach(e=>o+='<line x1="'+N[e[0]][0]+'" y1="'+N[e[0]][1]+'" x2="'+N[e[1]][0]+'" y2="'+N[e[1]][1]+'" stroke="'+C.m+'" stroke-width="1.5"/>');
+  N.forEach(n=>o+='<circle cx="'+n[0]+'" cy="'+n[1]+'" r="13" fill="'+(n[2]?C.c:C.f)+'" stroke="'+C.n+'" stroke-width="1.5"/>'+(n[2]&&E().dist==='yes'?T(n[0],n[1]+4,n[2],{a:'middle'}):''));
+  return o+T(300,300,'System',{a:'middle',c:C.f})+T(300,368,(E().dist==='yes'?'Numbers count the steps from the system. Nothing exists between the nodes.':'Only the links count. No distance is read from this picture.'),{a:'middle',c:C.f})},
+ fractal(){let o=BG;const rec=(x,y,r,d,h)=>{let s='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+['#e6ebe0','#aebfa6','#6f8f74','#1f4d36'][d]+'" stroke="'+C.n+'" stroke-width="'+(h?3:1)+'"/>';if(d<3)for(let k=0;k<3;k++){const a=-Math.PI/2+k*2*Math.PI/3;s+=rec(x+r*0.5*Math.cos(a),y+r*0.5*Math.sin(a),r*0.42,d+1,d===0&&k===0)}return s};
+  o+=rec(300,185,165,0);
+  return o+'<line x1="360" y1="80" x2="470" y2="60" stroke="'+C.n+'" stroke-width="1"/>'+T(476,64,'System')+T(476,300,'larger system',{c:C.m})+'<line x1="425" y1="285" x2="472" y2="296" stroke="'+C.m+'" stroke-width="1"/>'+T(300,372,'The heavy outline is the system. The same three-part form repeats above and below it.',{a:'middle',c:C.f})}
+};
+
+
+// Euclidean drawing with one, two, three or many dimensions
+DRAW.euclid=function(){const d=E().dims||'2';let o=BG;
+  if(d==='1'){o+='<line x1="40" y1="200" x2="560" y2="200" stroke="'+C.n+'" stroke-width="1.5"/>';
+    [[120,'A'],[485,'B']].forEach(q=>{const dd=Math.abs(q[0]-290);o+='<path d="M'+q[0]+' 170 L'+q[0]+' 160 L290 160 L290 170" fill="none" stroke="'+C.m+'" stroke-width="1.5" stroke-dasharray="5 4"/>'+T((q[0]+290)/2,152,(dd/20).toFixed(1)+' units',{a:'middle',c:C.f})+'<circle class="env" cx="'+q[0]+'" cy="200" r="6" fill="'+C.n+'"/>'+T(q[0],228,q[1],{a:'middle'})});
+    return o+'<rect x="248" y="186" width="84" height="28" fill="'+C.f+'"/>'+T(290,205,'System',{a:'middle',c:C.c})+T(300,300,'One dimension: only left and right of the system',{a:'middle',c:C.f})}
+  [70,130,190,250].forEach(r=>{o+='<circle cx="290" cy="195" r="'+r+'" fill="none" stroke="'+C.s+'" stroke-width="1"/>';if(d==='3')o+='<ellipse cx="290" cy="195" rx="'+r+'" ry="'+r*0.3+'" fill="none" stroke="'+C.s+'" stroke-width="1" stroke-dasharray="3 3"/>'});
+  ENV.forEach(q=>{const dd=Math.hypot(q[0]-290,q[1]-195);o+='<line x1="290" y1="195" x2="'+q[0]+'" y2="'+q[1]+'" stroke="'+C.m+'" stroke-width="1.5" stroke-dasharray="5 4"/>'+T((q[0]+290)/2+6,(q[1]+195)/2-6,(dd/20).toFixed(1)+' units',{c:C.f})+PT(q[0],q[1],q[2])});
+  o+='<circle cx="290" cy="195" r="42" fill="'+C.f+'"/>'+(d==='3'?'<ellipse cx="290" cy="195" rx="42" ry="13" fill="none" stroke="'+C.c+'" stroke-width="1"/>':'')+T(290,199,'System',{a:'middle',c:C.c});
+  if(d==='3')o+=T(300,366,'Three dimensions: each ring is a shell around the system',{a:'middle',c:C.f});
+  if(d==='n')o+=T(300,366,'A flat slice through a space of many dimensions',{a:'middle',c:C.f});
+  return o};
+function keep(){try{localStorage.setItem('space-el1-work3',JSON.stringify(S))}catch(e){}}
+function valid(v){return v&&Array.isArray(v.views)&&v.views.length&&v.views.every(x=>VW(x))&&v.choice&&Object.keys(v.choice).every(k=>PI(k)>=0&&PROPS[PI(k)].opts.some(o=>o[0]===v.choice[k]))}
+function load(){try{const v=JSON.parse(localStorage.getItem('space-el1-work3'));if(valid(v)){S.views=v.views;S.choice=v.choice;S.pin=GN(v.pin)?v.pin:null}}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem('space-el1-saved3'));if(valid(v))SAVED={views:v.views,choice:v.choice}}catch(e){}
+  const h=(location.hash||'').slice(1);if(h&&VW(h))S.open=h}
+$('save').addEventListener('click',()=>{SAVED={views:S.views.slice(),choice:Object.assign({},S.choice)};try{localStorage.setItem('space-el1-saved3',JSON.stringify(SAVED))}catch(e){}S.last='Space saved. It now sets the limits shown for the Boundary.';render()});
+$('revert').addEventListener('click',()=>{if(!SAVED)return;S.views=SAVED.views.slice();S.choice=Object.assign({},SAVED.choice);S.pin=null;S.last='Reverted to the saved Space.';flashNext=true;keep();render()});
+$('reset').addEventListener('click',()=>{S.choice={};S.pin=null;S.last="Properties reset to the views' values.";flashNext=true;keep();render()});
+buildRail(); load(); render();
+if(S.open){const e=$(S.open);if(e&&e.scrollIntoView)e.scrollIntoView()}
+</script>
+
+</body>
+</html>
