@@ -1,0 +1,467 @@
+import { useState } from 'react';
+
+const ArchitectureExplorer = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [activeView, setActiveView] = useState('steps');
+  const [activeTab, setActiveTab] = useState('description');
+  const [activeDomain, setActiveDomain] = useState('software');
+  
+  // Step descriptions
+  const stepDescriptions = {
+    1: "Every system exists within a Space, which represents the environment or context in which the system operates. The space encompasses all potential influences, resources, and constraints that can affect the system.",
+    2: "The Boundary defines what's inside vs. outside the system. It delineates the scope and establishes a clear separation between the system and its environment.",
+    3: "Forces are the external pressures and influences that act upon the system from the environment. These forces shape how the system evolves and behaves.",
+    4: "The Purpose is the core reason the system exists. It defines what the system is meant to accomplish and guides all design decisions.",
+    5: "Structure refers to the organization and arrangement of system elements. It defines how parts fit together to form a coherent whole.",
+    6: "Mechanism describes the processes and methods by which the system performs its functions. These are the dynamic aspects that drive the system's behavior.",
+    7: "Parts & Connections are the individual elements and their relationships that make up the system. These are the physical or conceptual building blocks.",
+    8: "Behavior refers to the observable outcomes and actions of the system. This is what the system does and how it responds to inputs and environmental changes.",
+    9: "Input & Output define what enters and exits the system across its boundaries.",
+    10: "The Complete System Architecture brings together all components to form a unified whole. All elements work together to fulfill the system's purpose within its environment."
+  };
+  
+  // Step names for sidebar
+  const stepNames = {
+    1: "Space",
+    2: "Boundary",
+    3: "Forces",
+    4: "Purpose",
+    5: "Structure",
+    6: "Mechanism",
+    7: "Parts & Connections",
+    8: "Behavior",
+    9: "Input & Output",
+    10: "Complete System"
+  };
+  
+  // Handle step navigation
+  const goToStep = (step) => {
+    if (step >= 1 && step <= 10) {
+      setCurrentStep(step);
+    }
+  };
+  
+  // Generate step items for sidebar
+  const renderStepItems = () => {
+    return Array.from({ length: 10 }, (_, i) => i + 1).map(step => (
+      <div 
+        key={step}
+        className={`flex items-center p-3 my-2 rounded-md cursor-pointer ${currentStep === step ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+        onClick={() => goToStep(step)}
+      >
+        <div className={`w-7 h-7 rounded-full mr-3 flex items-center justify-center ${currentStep === step ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
+          {step}
+        </div>
+        <div>{stepNames[step]}</div>
+      </div>
+    ));
+  };
+  
+  // SVG diagram for the current step
+  const renderDiagram = () => {
+    // This is a simplified diagram representation
+    return (
+      <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
+        {/* Base space layer - always visible */}
+        <div className="absolute inset-0">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full font-medium shadow-sm z-10">
+            Space
+          </div>
+        </div>
+        
+        {/* Boundary circle - visible on step 2+ */}
+        {currentStep >= 2 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border-2 border-dashed border-yellow-800">
+            {currentStep === 2 && (
+              <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded text-sm font-medium border border-yellow-800">
+                Boundary
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Force arrows - visible on step 3+ */}
+        {currentStep >= 3 && (
+          <div className="absolute inset-0">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 rotate-90 w-7 h-7 bg-orange-400 clip-arrow"></div>
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 w-7 h-7 bg-orange-400 clip-arrow"></div>
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 -rotate-90 w-7 h-7 bg-orange-400 clip-arrow"></div>
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 rotate-180 w-7 h-7 bg-orange-400 clip-arrow"></div>
+            
+            {currentStep === 3 && (
+              <div className="absolute bottom-1/3 left-20 bg-white px-3 py-1 rounded text-sm font-medium border border-yellow-800">
+                Forces
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* System purpose - visible on step 4+ */}
+        {currentStep >= 4 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56">
+            <div className={`text-center p-3 bg-white rounded-md border-2 ${currentStep === 4 ? 'border-orange-400 shadow-lg' : 'border-yellow-700'} font-semibold text-yellow-900`}>
+              Purpose
+            </div>
+            
+            {/* Structure - visible on step 5+ */}
+            {currentStep >= 5 && (
+              <div className={`mt-3 text-center p-3 bg-white rounded-md border-2 ${currentStep === 5 ? 'border-blue-500 shadow-lg' : 'border-yellow-800'}`}>
+                <div className="font-semibold">Structure</div>
+                <div className="mt-1 px-2 py-1 bg-yellow-50 text-sm rounded border border-yellow-800 inline-block">
+                  Modules
+                </div>
+              </div>
+            )}
+            
+            {/* Mechanism - visible on step 6+ */}
+            {currentStep >= 6 && (
+              <div className={`mt-3 text-center p-3 bg-white rounded-md border-2 ${currentStep === 6 ? 'border-blue-500 shadow-lg' : 'border-yellow-800'}`}>
+                <div className="font-semibold">Mechanism</div>
+                <div className="flex justify-center gap-5 mt-2">
+                  <div className="w-8 h-8 text-yellow-800">⚙️</div>
+                  <div className="w-8 h-8 text-blue-500">🔄</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Parts - visible on step 7+ */}
+            {currentStep >= 7 && (
+              <div className={`mt-3 text-center p-3 bg-white rounded-md border-2 ${currentStep === 7 ? 'border-blue-500 shadow-lg' : 'border-yellow-800'}`}>
+                <div className="font-medium">Parts</div>
+                <div className="font-medium">Connections</div>
+              </div>
+            )}
+            
+            {/* Behavior - visible on step 8+ */}
+            {currentStep >= 8 && (
+              <div className={`mt-3 text-center p-3 bg-white rounded-md border-2 ${currentStep === 8 ? 'border-blue-500 shadow-lg' : 'border-yellow-800'}`}>
+                <div className="font-medium">Output</div>
+                <div className="font-semibold">Behavior</div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Input/Output arrows - visible on step 9+ */}
+        {currentStep >= 9 && (
+          <div className="absolute top-1/2 w-full flex justify-between px-16 transform -translate-y-1/2">
+            <div className="flex flex-col items-center">
+              <div className="text-sm font-medium mb-2">Input</div>
+              <div className="w-12 h-1 bg-blue-500 relative">
+                <div className="absolute right-0 top-1/2 transform translate-x-0 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-t-transparent border-b-transparent border-l-blue-500"></div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-sm font-medium mb-2">Output</div>
+              <div className="w-12 h-1 bg-blue-500 relative transform rotate-180">
+                <div className="absolute right-0 top-1/2 transform translate-x-0 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-t-transparent border-b-transparent border-l-blue-500"></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Header */}
+      <div className="flex items-center mb-6">
+        <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mr-5">
+          11
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold">Architecture</h1>
+          <p className="text-gray-500">Understanding system architecture step by step</p>
+        </div>
+      </div>
+      
+      {/* View mode tabs */}
+      <div className="flex gap-4 mb-8">
+        <button 
+          className={`px-4 py-2 rounded ${activeView === 'steps' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          onClick={() => setActiveView('steps')}
+        >
+          Step by Step
+        </button>
+        <button 
+          className={`px-4 py-2 rounded ${activeView === 'principles' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          onClick={() => setActiveView('principles')}
+        >
+          Key Principles
+        </button>
+        <button 
+          className={`px-4 py-2 rounded ${activeView === 'examples' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          onClick={() => setActiveView('examples')}
+        >
+          Real-World Examples
+        </button>
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left sidebar */}
+        <div className="w-full lg:w-72 bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-blue-500 text-white p-4 font-semibold">
+            Exploration Steps
+          </div>
+          <div className="p-4">
+            {renderStepItems()}
+          </div>
+          
+          {/* Domain selector */}
+          <div className="p-4 bg-gray-100 mt-4">
+            <div className="font-semibold mb-2">Application Domains</div>
+            <div className="flex flex-wrap gap-2">
+              {['software', 'hardware', 'org', 'urban', 'bio'].map(domain => (
+                <button
+                  key={domain}
+                  className={`px-3 py-2 text-sm rounded border ${activeDomain === domain ? 'bg-blue-100 border-blue-500 text-blue-800' : 'bg-white border-gray-300 hover:bg-blue-50'}`}
+                  onClick={() => setActiveDomain(domain)}
+                >
+                  {domain.charAt(0).toUpperCase() + domain.slice(1)}
+                </button>
+              ))}
+            </div>
+            
+            {/* Domain example */}
+            <div className="mt-4 bg-white p-3 rounded">
+              <div className="flex justify-between">
+                <div className="font-semibold">
+                  {activeDomain === 'software' && "Microservice Architecture"}
+                  {activeDomain === 'hardware' && "Computer Processor"}
+                  {activeDomain === 'org' && "Matrix Organization"}
+                  {activeDomain === 'urban' && "Smart City Grid"}
+                  {activeDomain === 'bio' && "Neural Networks"}
+                </div>
+                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                  {activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1)}
+                </span>
+              </div>
+              <div className="text-sm text-gray-700 mt-1">
+                {activeDomain === 'software' && "A decomposition of a system into small, independent services that communicate via APIs."}
+                {activeDomain === 'hardware' && "CPU architecture with interconnected components like ALU, registers, and cache."}
+                {activeDomain === 'org' && "A structure where employees report to both functional and project managers."}
+                {activeDomain === 'urban' && "Integrated systems for transportation, utilities, and services in urban environments."}
+                {activeDomain === 'bio' && "The organized structure of neurons and connections in biological systems."}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main content */}
+        <div className="flex-1">
+          {activeView === 'steps' && (
+            <div className="bg-white rounded-lg shadow-md">
+              {/* Step header */}
+              <div className="bg-blue-500 text-white p-4 flex justify-between items-center">
+                <div className="font-semibold">Step {currentStep}: {stepNames[currentStep]}</div>
+                <div className="flex gap-3">
+                  <button 
+                    className={`px-3 py-1 rounded text-sm flex items-center gap-1 ${currentStep <= 1 ? 'bg-white bg-opacity-20 cursor-not-allowed' : 'bg-white bg-opacity-20 hover:bg-opacity-30'}`}
+                    onClick={() => goToStep(currentStep - 1)}
+                    disabled={currentStep <= 1}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                    </svg>
+                    Previous
+                  </button>
+                  <button 
+                    className={`px-3 py-1 rounded text-sm flex items-center gap-1 ${currentStep >= 10 ? 'bg-white bg-opacity-20 cursor-not-allowed' : 'bg-white bg-opacity-20 hover:bg-opacity-30'}`}
+                    onClick={() => goToStep(currentStep + 1)}
+                    disabled={currentStep >= 10}
+                  >
+                    Next
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content tabs */}
+              <div className="p-5">
+                <div className="flex bg-gray-200 rounded-md overflow-hidden mb-4">
+                  <button 
+                    className={`flex-1 py-2 text-center font-medium ${activeTab === 'description' ? 'bg-blue-500 text-white' : 'hover:bg-gray-300'}`}
+                    onClick={() => setActiveTab('description')}
+                  >
+                    Description
+                  </button>
+                  <button 
+                    className={`flex-1 py-2 text-center font-medium ${activeTab === 'principles' ? 'bg-blue-500 text-white' : 'hover:bg-gray-300'}`}
+                    onClick={() => setActiveTab('principles')}
+                  >
+                    Key Principles
+                  </button>
+                  <button 
+                    className={`flex-1 py-2 text-center font-medium ${activeTab === 'examples' ? 'bg-blue-500 text-white' : 'hover:bg-gray-300'}`}
+                    onClick={() => setActiveTab('examples')}
+                  >
+                    Examples
+                  </button>
+                </div>
+                
+                {/* Tab content */}
+                {activeTab === 'description' && (
+                  <div className="prose">
+                    <p>{stepDescriptions[currentStep]}</p>
+                    {currentStep === 1 && (
+                      <ul className="mt-4">
+                        <li>The available resources and constraints</li>
+                        <li>Environmental factors that will influence the system</li>
+                        <li>The context in which the system will operate</li>
+                        <li>Potential interactions with other systems</li>
+                      </ul>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'principles' && (
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
+                    <div className="font-semibold text-blue-800 mb-2">Core Principles of {stepNames[currentStep]}</div>
+                    <ul className="ml-4">
+                      {currentStep === 1 && (
+                        <>
+                          <li><strong>Context Awareness:</strong> A system must be designed with a deep understanding of its operating environment.</li>
+                          <li><strong>Resource Identification:</strong> The space contains all potential resources the system can utilize.</li>
+                          <li><strong>Constraint Recognition:</strong> The space also defines the limitations and constraints the system must operate within.</li>
+                        </>
+                      )}
+                      {currentStep !== 1 && <li>Principle example for Step {currentStep}</li>}
+                    </ul>
+                  </div>
+                )}
+                
+                {activeTab === 'examples' && (
+                  <div>
+                    <div className="bg-gray-100 p-3 rounded-md mb-3">
+                      <div className="flex justify-between">
+                        <div className="font-semibold">Cloud Computing Environment</div>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Software</span>
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1">
+                        The "space" for a cloud-based application includes the virtual infrastructure, available computing resources, network conditions, regulatory requirements, and security constraints.
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-100 p-3 rounded-md">
+                      <div className="flex justify-between">
+                        <div className="font-semibold">Smart Home System</div>
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Hardware</span>
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1">
+                        The space includes the physical home environment, electrical infrastructure, internet connectivity, user behaviors, and environmental conditions.
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Interactive diagram */}
+                <div className="mt-5">
+                  {renderDiagram()}
+                </div>
+                
+                {/* Navigation buttons */}
+                <div className="flex justify-between mt-4">
+                  <button 
+                    className={`px-4 py-2 flex items-center gap-2 rounded ${currentStep <= 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                    onClick={() => goToStep(currentStep - 1)}
+                    disabled={currentStep <= 1}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Previous
+                  </button>
+                  
+                  <button 
+                    className={`px-4 py-2 flex items-center gap-2 rounded ${currentStep >= 10 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                    onClick={() => goToStep(currentStep + 1)}
+                    disabled={currentStep >= 10}
+                  >
+                    Next
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeView === 'principles' && (
+            <div className="bg-white rounded-lg shadow-md p-5">
+              <h2 className="text-xl font-semibold mb-4">Key Architecture Principles</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
+                  <div className="font-semibold text-blue-800 mb-2">1. Wholeness and Unity</div>
+                  <p>A system is more than the sum of its parts. Its behavior emerges from the combined parts, connections, and mechanisms working together toward a common purpose.</p>
+                </div>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
+                  <div className="font-semibold text-blue-800 mb-2">2. Hierarchical Organization</div>
+                  <p>Systems are organized in levels, with higher-level structures incorporating lower-level components. Each level addresses different aspects of the system's function.</p>
+                </div>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
+                  <div className="font-semibold text-blue-800 mb-2">3. Boundary Clarity</div>
+                  <p>Clear delineation between internal and external elements is essential. Well-defined boundaries help focus the system's purpose and identify what's in and out of scope.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeView === 'examples' && (
+            <div className="bg-white rounded-lg shadow-md p-5">
+              <h2 className="text-xl font-semibold mb-4">Real-World Architecture Examples</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-gray-100 p-4 rounded-md">
+                  <div className="flex justify-between">
+                    <div className="font-semibold">Microservice Architecture</div>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Software</span>
+                  </div>
+                  <div className="text-gray-700 mt-2">
+                    <p><strong>Space:</strong> Cloud infrastructure, distributed computing environment</p>
+                    <p><strong>Boundary:</strong> Service boundaries defined by business capabilities</p>
+                    <p><strong>Purpose:</strong> Facilitate independent development, deployment and scaling</p>
+                    <p><strong>Structure:</strong> Collection of loosely coupled, independently deployable services</p>
+                    <p><strong>Mechanism:</strong> API communication, event-driven messaging</p>
+                    <p><strong>Behavior:</strong> Resilience, scalability, continuous delivery</p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-100 p-4 rounded-md">
+                  <div className="flex justify-between">
+                    <div className="font-semibold">CPU Architecture</div>
+                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Hardware</span>
+                  </div>
+                  <div className="text-gray-700 mt-2">
+                    <p><strong>Space:</strong> Computer system, electrical environment</p>
+                    <p><strong>Boundary:</strong> Physical chip boundaries</p>
+                    <p><strong>Purpose:</strong> Execute instructions, process data</p>
+                    <p><strong>Structure:</strong> Core, cache, control units, execution units</p>
+                    <p><strong>Mechanism:</strong> Fetch-decode-execute cycle, pipelining</p>
+                    <p><strong>Behavior:</strong> Instruction processing, memory management</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Add some CSS for custom styling */}
+      <style jsx>{`
+        .clip-arrow {
+          clip-path: polygon(0% 35%, 65% 35%, 65% 0%, 100% 50%, 65% 100%, 65% 65%, 0% 65%);
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default ArchitectureExplorer;
